@@ -1,0 +1,47 @@
+{
+  "name": "trueqer-api-gateway",
+  "version": "1.0.0",
+  "description": "Trueqer Serverless API Gateway, OpenAPI 3.0 Contract & MySQL Transaction Engine",
+  "main": "functions/src/index.ts",
+  "scripts": {
+    "validate:openapi": "redocly lint docs/api/openapi.yaml",
+    "generate:types": "openapi-typescript docs/api/openapi.yaml -o functions/src/types/api.generated.ts",
+    "mock:api": "prism mock docs/api/openapi.yaml -p 4010 -h 127.0.0.1",
+    "mock:api:dynamic": "prism mock docs/api/openapi.yaml -p 4010 -h 127.0.0.1 -d",
+    "build": "tsc",
+    "dev": "tsx watch functions/src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "trueqer",
+    "openapi",
+    "api-gateway",
+    "serverless",
+    "mysql",
+    "totp",
+    "uber-h3"
+  ],
+  "author": "Trueqer Architecture Team",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "h3-js": "^4.1.0",
+    "helmet": "^8.0.0",
+    "mysql2": "^3.12.0",
+    "otpauth": "^9.3.6",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.28.1",
+    "@stoplight/prism-cli": "^5.12.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.4",
+    "openapi-typescript": "^7.6.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
