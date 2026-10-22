@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "272721830059",
+    "project_id": "trueqer",
+    "storage_bucket": "trueqer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272721830059:android:43ff33edaa604dd3d297ee",
+        "android_client_info": {
+          "package_name": "com.example.trueqer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzi9Ebgr9uQaA-BGju3tIBXaCeYx98R0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
