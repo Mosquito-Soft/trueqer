@@ -12,10 +12,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Build Outputs
-dist/
-build/
-lib/
-*.tsbuildinfo
+
 
 # Firebase
 .firebase/
