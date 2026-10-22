@@ -217,9 +217,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05), // Glassmorphic dark fill
+        color: Colors.white.withValues(alpha: 0.05), // Glassmorphic dark fill
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFC107).withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
