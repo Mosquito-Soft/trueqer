@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
 
-    Navigator.pushReplacementNamed(context, '/profile');
+    Navigator.pushReplacementNamed(context, '/foryou');
   } on FirebaseAuthException catch (e) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

@@ -5,6 +5,7 @@ import 'firebase_options.dart'; // Automatically generated!
 import 'signup_screen.dart';
 import 'login_screen.dart';
 import 'user_profile_page.dart';
+import 'for_you_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,7 @@ class TrueqerApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/profile': (context) => const UserProfilePage(),
         '/home': (context) => const TrueqerHomeScreen(),
+        '/foryou':(context) => const ForYouPage(),
       },
     );
   }

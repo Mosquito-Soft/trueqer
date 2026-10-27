@@ -70,7 +70,7 @@ class _SignupScreenState extends State<SignupScreen> {
       );
 
       // Navigate to Home screen after successful account creation
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/foryou');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
