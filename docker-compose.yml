@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: trueqer_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: trueqer_db
+      MYSQL_USER: trueqer_user
+      MYSQL_PASSWORD: secret_db_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Automatically initialize the MySQL database schema and seed catalog on first start
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "trueqer_user", "-psecret_db_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trueqer_api_gateway
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: development
+      PORT: 5001
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: trueqer_user
+      DB_PASSWORD: secret_db_password
+      DB_NAME: trueqer_db
+      DB_CONNECTION_LIMIT: 10
+      JWT_SECRET: super_secret_jwt_signing_key_for_testing
+      GOOGLE_CLIENT_ID: 272721830059-placeholder.apps.googleusercontent.com
+    volumes:
+      - ./functions:/app/functions
+      - ./docs:/app/docs
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

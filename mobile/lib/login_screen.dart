@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'core/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,45 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLampOn = true; // Controls the light beam & illumination state
   bool _rememberMe = false; // Controls Remember Me checkbox state
   bool _isLoading = false; // Firebase loading state
+  bool _isGoogleLoading = false; // Google OAuth2 loading state
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    try {
+      final authResult = await AuthService().signInWithGoogle();
+      if (authResult == null) return;
+
+      if (!mounted) return;
+      final user = authResult['user'] as Map<String, dynamic>?;
+      final displayName = user?['display_name'] ?? 'Trueqer User';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Welcome, $displayName! Signed in with Google.'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+
+      Navigator.pushReplacementNamed(context, '/profile');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In failed: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
+    }
+  }
 
   late AnimationController _switchController;
   late Animation<double> _cordAnimation;
@@ -396,6 +436,50 @@ class _LoginScreenState extends State<LoginScreen>
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                 ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.white24)),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text(
+                                    'OR',
+                                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: Colors.white24)),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.white38),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  backgroundColor: Colors.white.withValues(alpha: 0.05),
+                                ),
+                                icon: _isGoogleLoading
+                                    ? const SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amberAccent),
+                                      )
+                                    : const Icon(Icons.g_mobiledata, color: Colors.amberAccent, size: 30),
+                                label: const Text(
+                                  'Continue with Google',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
                               ),
                             ),
                           ],

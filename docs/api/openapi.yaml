@@ -28,6 +28,8 @@ security:
   - BearerAuth: []
 
 tags:
+  - name: Auth
+    description: OAuth2 Identity authentication (Google Identity Services & Apple Sign-In).
   - name: Users
     description: User profiles, privacy-preserving location, and GDPR account management.
   - name: Search
@@ -42,6 +44,99 @@ tags:
     description: Blind 48-hour two-sided review submission and asynchronous reputation engine.
 
 paths:
+  /api/v1/auth/google:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate with Google OAuth2 ID Token ([REQ-01])
+      description: |
+        Authenticates a user via Google Identity Services. Validates the ID token,
+        checks if the user exists in MySQL, creates the user record if new, and returns
+        a Trueqer JWT Bearer session token and user profile.
+      operationId: loginWithGoogle
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id_token
+              properties:
+                id_token:
+                  type: string
+                  description: Google ID token obtained from Google Sign-In SDK
+                  example: "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEy..."
+                display_name:
+                  type: string
+                  description: Optional display name override from client profile
+                  example: "Camila Fernandez"
+                email:
+                  type: string
+                  format: email
+                  example: "camila@gmail.com"
+                avatar_url:
+                  type: string
+                  format: uri
+                  example: "https://lh3.googleusercontent.com/a/ACg8oc..."
+      responses:
+        '200':
+          description: Successfully authenticated with Google
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - is_new_user
+                  - token
+                  - user
+                properties:
+                  is_new_user:
+                    type: boolean
+                    example: false
+                  token:
+                    type: string
+                    description: Trueqer JWT Bearer session token
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    required:
+                      - user_id
+                      - display_name
+                      - is_available
+                      - average_rating
+                      - total_swaps
+                    properties:
+                      user_id:
+                        type: string
+                        format: uuid
+                        example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+                      display_name:
+                        type: string
+                        example: "Camila Fernandez"
+                      avatar_url:
+                        type: string
+                        format: uri
+                        nullable: true
+                        example: "https://lh3.googleusercontent.com/a/ACg8oc..."
+                      is_available:
+                        type: boolean
+                        example: true
+                      average_rating:
+                        type: number
+                        format: float
+                        example: 4.92
+                      total_swaps:
+                        type: integer
+                        example: 14
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+
   /api/v1/users/{user_id}/public-profile:
     get:
       tags:

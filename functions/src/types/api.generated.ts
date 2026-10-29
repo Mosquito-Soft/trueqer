@@ -4,6 +4,9 @@
  */
 
 export interface paths {
+  "/api/v1/auth/google": {
+    post: operations["loginWithGoogle"];
+  };
   "/api/v1/users/{user_id}/public-profile": {
     get: operations["getPublicProfile"];
   };
@@ -339,6 +342,15 @@ export interface operations {
       403: { content: { "application/json": components["schemas"]["ApiError"] } };
       404: { content: { "application/json": components["schemas"]["ApiError"] } };
       409: { content: { "application/json": components["schemas"]["ApiError"] } };
+      422: { content: { "application/json": components["schemas"]["ValidationError"] } };
+    };
+  };
+  loginWithGoogle: {
+    requestBody: { content: { "application/json": { id_token: string; display_name?: string; email?: string; avatar_url?: string } } };
+    responses: {
+      200: { content: { "application/json": { is_new_user: boolean; token: string; user: any } } };
+      400: { content: { "application/json": components["schemas"]["ApiError"] } };
+      401: { content: { "application/json": components["schemas"]["ApiError"] } };
       422: { content: { "application/json": components["schemas"]["ValidationError"] } };
     };
   };

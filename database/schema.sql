@@ -134,8 +134,8 @@ CREATE TABLE swaps (
     CONSTRAINT fk_swaps_offered_skill FOREIGN KEY (offered_skill_id) 
         REFERENCES skills (skill_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_swaps_requested_skill FOREIGN KEY (requested_skill_id) 
-        REFERENCES skills (skill_id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT chk_swaps_different_users CHECK (requester_id <> receiver_id)
+        REFERENCES skills (skill_id) ON DELETE RESTRICT ON UPDATE CASCADE
+    -- Note: requester_id <> receiver_id is enforced by the API Gateway to comply with MySQL 8.0 CHECK referential action limits
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bilateral skill swap transactions and state machine';
 
 -- ------------------------------------------------------------------------------
@@ -199,8 +199,8 @@ CREATE TABLE reviews (
         REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_reviews_reviewee FOREIGN KEY (reviewee_id) 
         REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT chk_reviews_different_parties CHECK (reviewer_id <> reviewee_id),
     CONSTRAINT chk_reviews_rating_range CHECK (rating BETWEEN 1 AND 5)
+    -- Note: reviewer_id <> reviewee_id is enforced by the API Gateway to comply with MySQL 8.0 CHECK referential action limits
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Independent blind reviews and ratings';
 
 SET FOREIGN_KEY_CHECKS = 1;
