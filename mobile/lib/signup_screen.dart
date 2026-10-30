@@ -16,25 +16,77 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _skillsOfferController = TextEditingController();
-  final TextEditingController _skillsLearnController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+
+  // Selected Skills Lists
+  final List<String> _selectedSkillsOffer = [];
+  final List<String> _selectedSkillsLearn = [];
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  // Comprehensive 20+ skill options list
+  final List<String> _availableSkills = [
+    'Baking',
+    'Guitar Lessons',
+    'Calculus II',
+    'Python',
+    'Spanish Conversation',
+    'Graphic Design',
+    'Flutter & Dart',
+    'Piano',
+    'Cooking & Culinary',
+    'Digital Marketing',
+    'UI/UX Design',
+    'Photography',
+    'Yoga & Mindfulness',
+    'Public Speaking',
+    'Video Editing',
+    'Personal Finance',
+    'French Language',
+    'Organic Chemistry',
+    'Data Science',
+    'Fitness & Weight Training',
+    'Creative Writing',
+    'Statistics',
+    'Web Development',
+  ];
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _skillsOfferController.dispose();
-    _skillsLearnController.dispose();
+    _confirmPasswordController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
   // --- Registration & Firestore Logic ---
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedSkillsOffer.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one skill you can offer.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedSkillsLearn.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one skill you want to learn.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -55,8 +107,9 @@ class _SignupScreenState extends State<SignupScreen> {
         'uid': uid,
         'fullName': _fullNameController.text.trim(),
         'email': _emailController.text.trim(),
-        'skillsToOffer': _skillsOfferController.text.trim(),
-        'skillsToLearn': _skillsLearnController.text.trim(),
+        'location': _locationController.text.trim(),
+        'skillsToOffer': _selectedSkillsOffer.join(', '),
+        'skillsToLearn': _selectedSkillsLearn.join(', '),
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -94,6 +147,91 @@ class _SignupScreenState extends State<SignupScreen> {
         });
       }
     }
+  }
+
+  // Helper method to open a multi-select modal bottom sheet for skills
+  void _showSkillSelectionDialog({
+    required String title,
+    required List<String> currentSelected,
+    required Function(List<String>) onConfirm,
+  }) {
+    List<String> tempSelected = List.from(currentSelected);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E2235),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _availableSkills.length,
+                      itemBuilder: (context, index) {
+                        final skill = _availableSkills[index];
+                        final isSelected = tempSelected.contains(skill);
+                        return CheckboxListTile(
+                          title: Text(skill, style: const TextStyle(color: Colors.white)),
+                          value: isSelected,
+                          activeColor: const Color(0xFF6C63FF),
+                          checkColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[400]!),
+                          onChanged: (bool? value) {
+                            setModalState(() {
+                              if (value == true) {
+                                tempSelected.add(skill);
+                              } else {
+                                tempSelected.remove(skill);
+                              }
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6C63FF),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      onConfirm(tempSelected);
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -165,6 +303,20 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Location / City Field
+                  _buildTextField(
+                    controller: _locationController,
+                    label: 'Location / City (e.g., Atlanta, GA)',
+                    icon: Icons.location_on_outlined,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your location or city';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
                   // Password Field
                   _buildTextField(
                     controller: _passwordController,
@@ -193,35 +345,80 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Skills To Offer Field
+                  // Confirm Password Field
                   _buildTextField(
-                    controller: _skillsOfferController,
-                    label: 'Skills You Offer (e.g., Python, Graphic Design)',
-                    icon: Icons.handshake_outlined,
+                    controller: _confirmPasswordController,
+                    label: 'Re-enter Password',
+                    icon: Icons.lock_reset_outlined,
+                    obscureText: _obscureConfirmPassword,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Colors.grey[400],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter at least one skill you can offer';
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // Skills To Learn Field
-                  _buildTextField(
-                    controller: _skillsLearnController,
-                    label: 'Skills You Want to Learn (e.g., Flutter, Piano)',
+                  // Skills To Offer Dropdown Selector
+                  _buildSkillSelectorField(
+                    label: _selectedSkillsOffer.isEmpty
+                        ? 'Select Skills You Offer'
+                        : 'Offered: ${_selectedSkillsOffer.join(', ')}',
+                    icon: Icons.handshake_outlined,
+                    onTap: () {
+                      _showSkillSelectionDialog(
+                        title: 'Select Skills You Can Offer',
+                        currentSelected: _selectedSkillsOffer,
+                        onConfirm: (selected) {
+                          setState(() {
+                            _selectedSkillsOffer.clear();
+                            _selectedSkillsOffer.addAll(selected);
+                          });
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Skills To Learn Dropdown Selector
+                  _buildSkillSelectorField(
+                    label: _selectedSkillsLearn.isEmpty
+                        ? 'Select Skills You Want to Learn'
+                        : 'Learning: ${_selectedSkillsLearn.join(', ')}',
                     icon: Icons.school_outlined,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter at least one skill you want to learn';
-                      }
-                      return null;
+                    onTap: () {
+                      _showSkillSelectionDialog(
+                        title: 'Select Skills You Want to Learn',
+                        currentSelected: _selectedSkillsLearn,
+                        onConfirm: (selected) {
+                          setState(() {
+                            _selectedSkillsLearn.clear();
+                            _selectedSkillsLearn.addAll(selected);
+                          });
+                        },
+                      );
                     },
                   ),
                   const SizedBox(height: 28),
 
-// Submit Button
+                  // Submit Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleSignup,
                     style: ElevatedButton.styleFrom(
@@ -321,6 +518,47 @@ class _SignupScreenState extends State<SignupScreen> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.redAccent),
+        ),
+      ),
+    );
+  }
+
+  // Reusable Custom Selector Field for Multi-Select Skills Dropdown
+  Widget _buildSkillSelectorField({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: Colors.grey[400],
+            fontSize: 14,
+            overflow: TextOverflow.ellipsis,
+          ),
+          prefixIcon: Icon(icon, color: Colors.grey[400]),
+          suffixIcon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.05),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

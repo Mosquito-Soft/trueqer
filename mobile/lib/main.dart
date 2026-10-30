@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:trueqer/chat.dart';
 import 'firebase_options.dart'; // Automatically generated!
 import 'signup_screen.dart';
 import 'login_screen.dart';
@@ -39,6 +40,7 @@ class TrueqerApp extends StatelessWidget {
         '/profile': (context) => const UserProfilePage(),
         '/home': (context) => const TrueqerHomeScreen(),
         '/foryou':(context) => const ForYouPage(),
+        '/chat': (context) => const ChatPage(),
       },
     );
   }

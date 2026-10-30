@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// TODO: Create this file later as search_skills.dart
 import 'search_skills.dart';
 
 class UserProfilePage extends StatefulWidget {
@@ -13,6 +12,29 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   final User? currentUser = FirebaseAuth.instance.currentUser;
+  
+  // Set initial index to 1 (assuming Profile is the 2nd tab in your bottom bar layout)
+  int _currentIndex = 1;
+
+  // Function to handle bottom navigation taps
+  void _onItemTapped(int index) {
+    if (index == _currentIndex) return;
+
+    setState(() {
+      _currentIndex = index;
+    });
+
+    if (index == 0) {
+      // Navigate to Search / Discover Skills Page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SearchSkillsPage()),
+      );
+    } else if (index == 2) {
+      // Navigate back to Main Dashboard / Home
+      Navigator.pushReplacementNamed(context, '/foryou');
+    }
+  }
 
   // Function to handle user logout and return to login screen
   Future<void> _handleLogout(BuildContext context) async {
@@ -128,7 +150,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
         ),
         iconTheme: const IconThemeData(color: Color(0xFFFFC107)),
         actions: [
-          // Search button taking user to search_skills.dart
           // Search button taking user to search_skills.dart
           IconButton(
             icon: const Icon(Icons.search, color: Color(0xFFFFC107)),
@@ -306,12 +327,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       ),
                       const SizedBox(height: 36),
 
-                      // Back to Main / Home Button
+                      // Back to For_You_Page / Home icon Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/home');
+                            Navigator.pushReplacementNamed(context, '/foryou');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFFC107),
@@ -336,6 +357,29 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 );
               },
             ),
+      // Functional Bottom Navigation Bar matching the dark & gold theme
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onItemTapped,
+        backgroundColor: Colors.black,
+        selectedItemColor: const Color(0xFFFFC107),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.explore),
+            label: 'Discover',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+        ],
+      ),
     );
   }
 

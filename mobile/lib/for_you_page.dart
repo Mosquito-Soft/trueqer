@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'chat.dart';
  
 class ForYouPage extends StatefulWidget {
   const ForYouPage({super.key});
@@ -374,9 +375,14 @@ class _ForYouPageState extends State<ForYouPage> {
                 onTap: () => _comingSoon('Request'),
               ),
               _navButton(
-                icon: Icons.chat_bubble_outline, // [M] Message
+                icon: Icons.chat_bubble_outline,
                 label: 'Messages',
-                onTap: () => _comingSoon('Messages'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChatPage()),
+                  );
+                },
               ),
               _navButton(
                 icon: Icons.person_outline, // [P] Profile
@@ -447,7 +453,6 @@ class _Post {
     required this.text,
     required this.likes,
     required this.comments,
-    this.liked = false,
-  });
+  }) : liked = false;
 }
  

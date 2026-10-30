@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart'; // <-- 1. Add this import
+import 'package:cloud_firestore/cloud_firestore.dart'; // <-- 2. Add this import for Firestore profile creation
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,7 +65,6 @@ class _LoginScreenState extends State<LoginScreen>
       );
       return;
     } 
-    // 2. If we reach here, email is valid, so call Firebase!
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       
@@ -85,53 +86,105 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  // --- Standard Email/Password Login --- //
   Future<void> _handleLogin() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  setState(() {
-    _isLoading = true;
-  });
+    setState(() {
+      _isLoading = true;
+    });
 
-  try {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logging in... Welcome back to Trueqer!'),
-        backgroundColor: Colors.teal,
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logging in... Welcome back to Trueqer!'),
+          backgroundColor: Colors.teal,
+        ),
+      );
 
-    Navigator.pushReplacementNamed(context, '/foryou');
-  } on FirebaseAuthException catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.message ?? 'Login failed. Please check your credentials.'),
-        backgroundColor: Colors.redAccent,
-      ),
-    );
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('An unexpected error occurred: $e'),
-        backgroundColor: Colors.redAccent,
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      Navigator.pushReplacementNamed(context, '/foryou');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'Login failed. Please check your credentials.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An unexpected error occurred: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
+
+Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+      
+      // Pass your Web Client ID here
+      await googleSignIn.initialize(
+        serverClientId: '272721830059-aupp8o9l1tk06qo73mlh1jc6to5040u6.apps.googleusercontent.com',
+      );
+
+      final GoogleSignInAccount googleUser = await googleSignIn.authenticate();
+
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      User? user = userCredential.user;
+
+      if (user != null) {
+        final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+        final docSnap = await userDocRef.get();
+
+        if (!docSnap.exists) {
+          await userDocRef.set({
+            'fullName': user.displayName ?? 'Trueqer User',
+            'email': user.email ?? '',
+            'profileImageUrl': user.photoURL ?? '',
+            'skillsToOffer': 'Not specified',
+            'skillsToLearn': 'Not specified',
+            'bio': 'Joined via Google Sign-In.',
+            'socialLink': '',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/foryou');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google Sign-In Error: ${e.toString()}'), backgroundColor: Colors.redAccent),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -369,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                             // Sign In Button
                             ElevatedButton(
-                              onPressed: _isLoading ? null : _handleLogin, //This disables the button while is loading
+                              onPressed: _isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 16),
@@ -381,20 +434,56 @@ class _LoginScreenState extends State<LoginScreen>
                                 elevation: 6,
                               ),
                               child: _isLoading
-                                ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'SIGN IN',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // --- OR Divider --- //
+                            const Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.white24)),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text('OR', style: TextStyle(color: Colors.white54, fontSize: 12)),
                                 ),
-                              )
-                              : const Text(
-                                'SIGN IN',
+                                Expanded(child: Divider(color: Colors.white24)),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // --- Google Sign-In Button --- //
+                            OutlinedButton.icon(
+                              onPressed: _isLoading ? null : _signInWithGoogle,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: BorderSide(color: Colors.amber.shade400.withValues(alpha: 0.6), width: 1.5),
+                                backgroundColor: Colors.black.withValues(alpha: 0.2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.g_mobiledata, color: Colors.amberAccent, size: 28),
+                              label: const Text(
+                                'Sign in with Google',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -520,7 +609,7 @@ class _LoginScreenState extends State<LoginScreen>
 
 class LightBeamPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas sizeCanvas, Size size) {
     final paint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
@@ -538,7 +627,7 @@ class LightBeamPainter extends CustomPainter {
       ..lineTo(-100, size.height)
       ..close();
 
-    canvas.drawPath(path, paint);
+    sizeCanvas.drawPath(path, paint);
   }
 
   @override
